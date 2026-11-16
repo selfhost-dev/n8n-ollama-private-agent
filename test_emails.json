@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "order_id": "ORD-1001",
+    "email": "Subject: Charged twice!\n\nHi, I was billed two times for order ORD-1001 on my card this morning. Please reverse the duplicate charge today, my bank balance is now too low to pay rent.\n\nPriya",
+    "expected_category": "billing",
+    "expected_urgency": "high"
+  },
+  {
+    "id": 2,
+    "order_id": "ORD-1002",
+    "email": "Subject: Invoice copy\n\nHello team, could you send me a PDF invoice for order ORD-1002? My accountant needs it by the end of next month. No rush at all.\n\nThanks, Marcus",
+    "expected_category": "billing",
+    "expected_urgency": "low"
+  },
+  {
+    "id": 3,
+    "order_id": "ORD-1003",
+    "email": "Subject: Checkout crashes on payment\n\nEvery time I press Pay on order ORD-1003 the page freezes and shows a white screen. I tried Chrome and Safari. I cannot complete my purchase and the sale ends tonight.\n\nAisha",
+    "expected_category": "bug",
+    "expected_urgency": "high"
+  },
+  {
+    "id": 4,
+    "order_id": "ORD-1004",
+    "email": "Subject: CSV export missing column\n\nHi, the CSV export of my orders (including ORD-1004) no longer has the 'discount' column since last week's update. Annoying but I can work around it manually.\n\nLeo",
+    "expected_category": "bug",
+    "expected_urgency": "medium"
+  },
+  {
+    "id": 5,
+    "order_id": "ORD-1005",
+    "email": "Subject: Change shipping address?\n\nHey, how do I change the shipping address for order ORD-1005 in my account settings? Just curious where that option lives, nothing urgent.\n\nSofia",
+    "expected_category": "how-to",
+    "expected_urgency": "low"
+  },
+  {
+    "id": 6,
+    "order_id": "ORD-1006",
+    "email": "Subject: Setting up webhooks\n\nWe want to connect order events (like ORD-1006) to our own system. Where do I set up a webhook and which events can I subscribe to? We plan to go live next week.\n\nDmitri, Acme Tools",
+    "expected_category": "how-to",
+    "expected_urgency": "medium"
+  },
+  {
+    "id": 7,
+    "order_id": "ORD-1007",
+    "email": "Subject: Partnership idea\n\nHi, I run a small newsletter and loved my order ORD-1007. Would you be open to a co-marketing partnership? Happy to chat whenever suits you.\n\nNadia",
+    "expected_category": "other",
+    "expected_urgency": "low"
+  },
+  {
+    "id": 8,
+    "order_id": "ORD-1008",
+    "email": "Subject: Refund not received\n\nYou approved a refund for ORD-1008 ten days ago but the money still has not arrived in my account. Can you check what is going on? I would like it sorted this week.\n\nCarlos",
+    "expected_category": "billing",
+    "expected_urgency": "medium"
+  },
+  {
+    "id": 9,
+    "order_id": "ORD-1009",
+    "email": "Subject: LOCKED OUT and data gone\n\nMy account is locked and all my saved orders including ORD-1009 have disappeared from the dashboard. I run my whole shop from this. Please fix ASAP!!\n\nHannah",
+    "expected_category": "bug",
+    "expected_urgency": "high"
+  },
+  {
+    "id": 10,
+    "order_id": "ORD-1010",
+    "email": "Subject: Feedback on packaging\n\nOrder ORD-1010 arrived fine, but the box was much bigger than needed. Just wanted to pass this on as feedback, no action needed.\n\nTom",
+    "expected_category": "other",
+    "expected_urgency": "low"
+  }
+]
