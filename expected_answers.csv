@@ -1,0 +1,11 @@
+id,order_id,expected_category,expected_urgency
+1,ORD-1001,billing,high
+2,ORD-1002,billing,low
+3,ORD-1003,bug,high
+4,ORD-1004,bug,medium
+5,ORD-1005,how-to,low
+6,ORD-1006,how-to,medium
+7,ORD-1007,other,low
+8,ORD-1008,billing,medium
+9,ORD-1009,bug,high
+10,ORD-1010,other,low
