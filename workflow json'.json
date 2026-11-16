@@ -1,0 +1,424 @@
+{
+  "name": "Private Support Ticket Triager (n8n + Ollama)",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { email: $json['Customer email'] } }];"
+      },
+      "id": "e7cad8d1-6d7f-48dc-8d95-4a036ea365b8",
+      "name": "Form To Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        112
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "9db45983-e436-4595-9532-d7104ee33d04",
+      "name": "Run Test Set",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        32,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const tests = [{\"id\": 1, \"order_id\": \"ORD-1001\", \"email\": \"Subject: Charged twice!\\n\\nHi, I was billed two times for order ORD-1001 on my card this morning. Please reverse the duplicate charge today, my bank balance is now too low to pay rent.\\n\\nPriya\", \"expected_category\": \"billing\", \"expected_urgency\": \"high\"}, {\"id\": 2, \"order_id\": \"ORD-1002\", \"email\": \"Subject: Invoice copy\\n\\nHello team, could you send me a PDF invoice for order ORD-1002? My accountant needs it by the end of next month. No rush at all.\\n\\nThanks, Marcus\", \"expected_category\": \"billing\", \"expected_urgency\": \"low\"}, {\"id\": 3, \"order_id\": \"ORD-1003\", \"email\": \"Subject: Checkout crashes on payment\\n\\nEvery time I press Pay on order ORD-1003 the page freezes and shows a white screen. I tried Chrome and Safari. I cannot complete my purchase and the sale ends tonight.\\n\\nAisha\", \"expected_category\": \"bug\", \"expected_urgency\": \"high\"}, {\"id\": 4, \"order_id\": \"ORD-1004\", \"email\": \"Subject: CSV export missing column\\n\\nHi, the CSV export of my orders (including ORD-1004) no longer has the 'discount' column since last week's update. Annoying but I can work around it manually.\\n\\nLeo\", \"expected_category\": \"bug\", \"expected_urgency\": \"medium\"}, {\"id\": 5, \"order_id\": \"ORD-1005\", \"email\": \"Subject: Change shipping address?\\n\\nHey, how do I change the shipping address for order ORD-1005 in my account settings? Just curious where that option lives, nothing urgent.\\n\\nSofia\", \"expected_category\": \"how-to\", \"expected_urgency\": \"low\"}, {\"id\": 6, \"order_id\": \"ORD-1006\", \"email\": \"Subject: Setting up webhooks\\n\\nWe want to connect order events (like ORD-1006) to our own system. Where do I set up a webhook and which events can I subscribe to? We plan to go live next week.\\n\\nDmitri, Acme Tools\", \"expected_category\": \"how-to\", \"expected_urgency\": \"medium\"}, {\"id\": 7, \"order_id\": \"ORD-1007\", \"email\": \"Subject: Partnership idea\\n\\nHi, I run a small newsletter and loved my order ORD-1007. Would you be open to a co-marketing partnership? Happy to chat whenever suits you.\\n\\nNadia\", \"expected_category\": \"other\", \"expected_urgency\": \"low\"}, {\"id\": 8, \"order_id\": \"ORD-1008\", \"email\": \"Subject: Refund not received\\n\\nYou approved a refund for ORD-1008 ten days ago but the money still has not arrived in my account. Can you check what is going on? I would like it sorted this week.\\n\\nCarlos\", \"expected_category\": \"billing\", \"expected_urgency\": \"medium\"}, {\"id\": 9, \"order_id\": \"ORD-1009\", \"email\": \"Subject: LOCKED OUT and data gone\\n\\nMy account is locked and all my saved orders including ORD-1009 have disappeared from the dashboard. I run my whole shop from this. Please fix ASAP!!\\n\\nHannah\", \"expected_category\": \"bug\", \"expected_urgency\": \"high\"}, {\"id\": 10, \"order_id\": \"ORD-1010\", \"email\": \"Subject: Feedback on packaging\\n\\nOrder ORD-1010 arrived fine, but the box was much bigger than needed. Just wanted to pass this on as feedback, no action needed.\\n\\nTom\", \"expected_category\": \"other\", \"expected_urgency\": \"low\"}];\nreturn tests.map(t => ({ json: t }));"
+      },
+      "id": "5689d920-545c-42f8-a1d3-0b6bc3c2d9be",
+      "name": "Test Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer email:\n{{ $json.email }}",
+        "options": {
+          "systemMessage": "You are a support ticket triager for an online shop. You receive one customer email.\n\nSteps:\n1. If the email mentions an order ID like ORD-1234, you MUST call the tool lookup_order_status once with that exact order ID before answering.\n2. Then reply with ONLY one JSON object, no markdown, no extra text, with exactly these keys:\n{\"category\":\"billing|bug|how-to|other\",\"urgency\":\"low|medium|high\",\"summary\":\"two short lines separated by \\n\",\"draft_reply\":\"a polite reply to the customer that uses the order status if you looked it up\"}\n\nRules: category must be exactly one of billing, bug, how-to, other. urgency must be exactly one of low, medium, high. High means money or access is blocked right now or a deadline is today.FINAL ANSWER RULE: After using the tool, your final reply must be ONLY the JSON object. It must start with { and end with }. Never write a letter, greeting, or \"Dear\". Put the customer reply inside the draft_reply key.",
+          "maxIterations": 5,
+          "returnIntermediateSteps": "={{ true }}"
+        }
+      },
+      "id": "b49a0c2b-f709-404b-9143-aa59212c4bfe",
+      "name": "Triage Agent Ollama",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        512,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:3b",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "c065ce99-3b5c-4a54-a77c-477c021b2cff",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        432,
+        512
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "AEaChuRXks84MWhd",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Look up the status of a customer order. Input: the order ID as plain text, for example ORD-1001. Returns JSON with status, carrier and ETA.",
+        "jsCode": "// Fake order database for the demo (made-up data only)\nconst orders = {\n  'ORD-1001': {status:'paid', note:'two payment attempts recorded', carrier:'n/a', eta:'n/a'},\n  'ORD-1002': {status:'delivered', carrier:'BlueDart', eta:'delivered'},\n  'ORD-1003': {status:'payment_pending', carrier:'n/a', eta:'n/a'},\n  'ORD-1004': {status:'shipped', carrier:'Delhivery', eta:'2 days'},\n  'ORD-1005': {status:'processing', carrier:'n/a', eta:'4 days'},\n  'ORD-1006': {status:'delivered', carrier:'DTDC', eta:'delivered'},\n  'ORD-1007': {status:'delivered', carrier:'BlueDart', eta:'delivered'},\n  'ORD-1008': {status:'refund_issued', note:'refund sent to bank 10 days ago', carrier:'n/a', eta:'n/a'},\n  'ORD-1009': {status:'shipped', carrier:'Delhivery', eta:'1 day'},\n  'ORD-1010': {status:'delivered', carrier:'DTDC', eta:'delivered'}\n};\nconst m = String(query).toUpperCase().match(/ORD-\\d+/);\nconst id = m ? m[0] : String(query).trim();\nreturn JSON.stringify({order_id:id, ...(orders[id] || {status:'not_found'})});"
+      },
+      "id": "e54d7003-d64f-46cf-b419-38a224127b8f",
+      "name": "Order Status Tool Ollama",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction parseAgent(raw){\n  let parsed=null, ok=false;\n  try { const m=String(raw||'').match(/\\{[\\s\\S]*\\}/); parsed=JSON.parse(m?m[0]:raw); ok=true; } catch(e){}\n  return {parsed, ok};\n}\nconst {parsed, ok} = parseAgent($json.output);\nconst p = parsed || {};\nreturn [{ json: {\n  title: ok ? 'Ticket triaged (private, local model)' : 'Model did not return valid JSON',\n  message: ok\n    ? `Category: ${p.category}\\nUrgency: ${p.urgency}\\n\\nSummary:\\n${p.summary}\\n\\nDraft reply:\\n${p.draft_reply}`\n    : String($json.output)\n}}];"
+      },
+      "id": "5b20d4e6-5545-4537-a20f-59504bfecc8a",
+      "name": "Format Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "={{ $json.title }}",
+        "completionMessage": "={{ $json.message }}",
+        "options": {}
+      },
+      "id": "400578d7-ef53-4c63-94ae-f01ad093f2e9",
+      "name": "Show Result",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        112
+      ],
+      "webhookId": "ticket-triage-result"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Set MODEL to the EXACT name you use everywhere (write-up, workflow, README)\nconst MODEL = 'llama3.2:3b';\nconst tests = $('Test Emails').all();\n\nfunction parseAgent(raw){\n  let parsed=null, ok=false;\n  try { const m=String(raw||'').match(/\\{[\\s\\S]*\\}/); parsed=JSON.parse(m?m[0]:raw); ok=true; } catch(e){}\n  return {parsed, ok};\n}\nreturn $input.all().map((item, i) => {\n  const t = tests[i].json;\n  const {parsed, ok} = parseAgent(item.json.output);\n  const steps = item.json.intermediateSteps || [];\n  const toolCalled = steps.length > 0;\n  const gotCat = parsed ? String(parsed.category||'').toLowerCase().trim() : null;\n  const gotUrg = parsed ? String(parsed.urgency||'').toLowerCase().trim() : null;\n  return { json: {\n    model: MODEL, id: t.id, order_id: t.order_id,\n    expected_category: t.expected_category, got_category: gotCat, category_correct: gotCat === t.expected_category,\n    expected_urgency: t.expected_urgency, got_urgency: gotUrg, urgency_correct: gotUrg === t.expected_urgency,\n    json_valid: ok, tool_called: toolCalled,\n    tool_call_ok: toolCalled && JSON.stringify(steps).includes(t.order_id),\n    summary: parsed ? parsed.summary : null, draft_reply: parsed ? parsed.draft_reply : null,\n    raw_output: item.json.output\n  } };\n});"
+      },
+      "id": "c1510fa7-5b9c-4daf-9b82-51ddaa876474",
+      "name": "Score Ollama",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\nconst n = rows.length;\nconst c = k => rows.filter(r => r[k] === true).length;\nreturn [{ json: {\n  model: rows[0]?.model, emails: n,\n  category_accuracy: c('category_correct') + '/' + n,\n  urgency_accuracy: c('urgency_correct') + '/' + n,\n  tool_call_success: c('tool_call_ok') + '/' + n,\n  valid_json: c('json_valid') + '/' + n\n} }];"
+      },
+      "id": "97f1fc8e-63d9-4c96-a525-0ca996297060",
+      "name": "Totals Ollama",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "c620c73d-11c0-4a4b-a88a-8e57cd202eb4",
+      "name": "Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        432,
+        960
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "description": "Look up the status of a customer order. Input: the order ID as plain text, for example ORD-1001. Returns JSON with status, carrier and ETA.",
+        "jsCode": "// Fake order database for the demo (made-up data only)\nconst orders = {\n  'ORD-1001': {status:'paid', note:'two payment attempts recorded', carrier:'n/a', eta:'n/a'},\n  'ORD-1002': {status:'delivered', carrier:'BlueDart', eta:'delivered'},\n  'ORD-1003': {status:'payment_pending', carrier:'n/a', eta:'n/a'},\n  'ORD-1004': {status:'shipped', carrier:'Delhivery', eta:'2 days'},\n  'ORD-1005': {status:'processing', carrier:'n/a', eta:'4 days'},\n  'ORD-1006': {status:'delivered', carrier:'DTDC', eta:'delivered'},\n  'ORD-1007': {status:'delivered', carrier:'BlueDart', eta:'delivered'},\n  'ORD-1008': {status:'refund_issued', note:'refund sent to bank 10 days ago', carrier:'n/a', eta:'n/a'},\n  'ORD-1009': {status:'shipped', carrier:'Delhivery', eta:'1 day'},\n  'ORD-1010': {status:'delivered', carrier:'DTDC', eta:'delivered'}\n};\nconst m = String(query).toUpperCase().match(/ORD-\\d+/);\nconst id = m ? m[0] : String(query).trim();\nreturn JSON.stringify({order_id:id, ...(orders[id] || {status:'not_found'})});"
+      },
+      "id": "1898f736-e648-4936-82ec-9eecf843e6f5",
+      "name": "Order Status Tool Gemini",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        960
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Set MODEL to the EXACT name you use everywhere (write-up, workflow, README)\nconst MODEL = 'gemini-2.5-flash';\nconst tests = $('Test Emails').all();\n\nfunction parseAgent(raw){\n  let parsed=null, ok=false;\n  try { const m=String(raw||'').match(/\\{[\\s\\S]*\\}/); parsed=JSON.parse(m?m[0]:raw); ok=true; } catch(e){}\n  return {parsed, ok};\n}\nreturn $input.all().map((item, i) => {\n  const t = tests[i].json;\n  const {parsed, ok} = parseAgent(item.json.output);\n  const steps = item.json.intermediateSteps || [];\n  const toolCalled = steps.length > 0;\n  const gotCat = parsed ? String(parsed.category||'').toLowerCase().trim() : null;\n  const gotUrg = parsed ? String(parsed.urgency||'').toLowerCase().trim() : null;\n  return { json: {\n    model: MODEL, id: t.id, order_id: t.order_id,\n    expected_category: t.expected_category, got_category: gotCat, category_correct: gotCat === t.expected_category,\n    expected_urgency: t.expected_urgency, got_urgency: gotUrg, urgency_correct: gotUrg === t.expected_urgency,\n    json_valid: ok, tool_called: toolCalled,\n    tool_call_ok: toolCalled && JSON.stringify(steps).includes(t.order_id),\n    summary: parsed ? parsed.summary : null, draft_reply: parsed ? parsed.draft_reply : null,\n    raw_output: item.json.output\n  } };\n});"
+      },
+      "id": "20ebb28a-6ad5-4015-a9cf-b888f1f5bcb8",
+      "name": "Score Gemini",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        736
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\nconst n = rows.length;\nconst c = k => rows.filter(r => r[k] === true).length;\nreturn [{ json: {\n  model: rows[0]?.model, emails: n,\n  category_accuracy: c('category_correct') + '/' + n,\n  urgency_accuracy: c('urgency_correct') + '/' + n,\n  tool_call_success: c('tool_call_ok') + '/' + n,\n  valid_json: c('json_valid') + '/' + n\n} }];"
+      },
+      "id": "c4ea39b1-f817-4b87-8361-74e7c1662551",
+      "name": "Totals Gemini",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        736
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer email:\n{{ $json.email }}",
+        "options": {
+          "systemMessage": "You are a support ticket triager for an online shop. You receive one customer email.\n\nSteps:\n1. If the email mentions an order ID like ORD-1234, you MUST call the tool lookup_order_status once with that exact order ID before answering.\n2. Then reply with ONLY one JSON object, no markdown, no extra text, with exactly these keys:\n{\"category\":\"billing|bug|how-to|other\",\"urgency\":\"low|medium|high\",\"summary\":\"two short lines separated by \\n\",\"draft_reply\":\"a polite reply to the customer that uses the order status if you looked it up\"}\n\nRules: category must be exactly one of billing, bug, how-to, other. urgency must be exactly one of low, medium, high. High means money or access is blocked right now or a deadline is today.",
+          "maxIterations": 5,
+          "returnIntermediateSteps": true
+        }
+      },
+      "id": "bbe1160b-db84-4d74-837c-fa2415d1d55f",
+      "name": "Triage Agent Gemini",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        512,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Support Ticket Triager",
+        "formDescription": "Paste a customer email. Everything is processed by a local model on your own server.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Customer email.",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -512,
+        464
+      ],
+      "id": "a3f85fd1-7862-4ab2-8c03-1c1cc11a2f65",
+      "name": "On form submission",
+      "webhookId": "8182f2c7-4a27-4a01-8bd1-877cd433e63b"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Form To Email": {
+      "main": [
+        [
+          {
+            "node": "Triage Agent Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Test Set": {
+      "main": [
+        [
+          {
+            "node": "Test Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Emails": {
+      "main": [
+        [
+          {
+            "node": "Triage Agent Ollama",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Triage Agent Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Triage Agent Ollama": {
+      "main": [
+        [
+          {
+            "node": "Format Result",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Score Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Result": {
+      "main": [
+        [
+          {
+            "node": "Show Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Ollama": {
+      "main": [
+        [
+          {
+            "node": "Totals Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Gemini": {
+      "main": [
+        [
+          {
+            "node": "Totals Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Triage Agent Ollama",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Order Status Tool Ollama": {
+      "ai_tool": [
+        [
+          {
+            "node": "Triage Agent Ollama",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Triage Agent Gemini",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Order Status Tool Gemini": {
+      "ai_tool": [
+        [
+          {
+            "node": "Triage Agent Gemini",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Triage Agent Gemini": {
+      "main": [
+        [
+          {
+            "node": "Score Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Form To Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6330b123-e980-49a6-beed-4b629d3891e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3dfce19260eff2e35fda3521c02c2afaa79cd42a840d98393eafc007373f3583"
+  },
+  "nodeGroups": [],
+  "id": "y5f7gg354CUqURr7",
+  "tags": []
+}
